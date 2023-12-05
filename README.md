@@ -33,6 +33,6 @@ Once the Flink job restarted, it was observed in Flink UI that 20 messages have 
 ## Usage of Pyflink Job submission 
 
 ```
-flink run   -d   -t yarn-per-job    -pyarch venv.zip   -pyclientexec venv.zip/venv/bin/python3.8 -pyexec venv.zip/venv/bin/python3.8  -py /tmp/nag_test.py 
+flink run   -d   -t yarn-per-job  -ynm StreamingKafkaJob  -pyarch venv.zip   -pyclientexec venv.zip/venv/bin/python3.8 -pyexec venv.zip/venv/bin/python3.8  -py /tmp/nag_test.py 
 
 ```
