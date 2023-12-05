@@ -108,7 +108,7 @@ if __name__ == "__main__":
     env = StreamExecutionEnvironment.get_execution_environment()
     table_env = StreamTableEnvironment.create(env)
 
-    #ACCESS_KEY = sys.argv[1]
+    ACCESS_KEY = sys.argv[1]
     env.add_jars("file:///tmp/flink-sql-connector-kafka-1.16.1.jar")
 
     #    print("start writing data to kafka")
