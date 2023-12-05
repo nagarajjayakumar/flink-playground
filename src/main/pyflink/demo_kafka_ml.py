@@ -24,17 +24,17 @@ from pyflink.table.udf import udf
 
 
 KAFKA_BROKERS = "%s:9092" % (socket.gethostname(),)
-PUBLIC_IP = requests.get('http://ifconfig.me').text
+PUBLIC_IP = '52.20.13.127' #requests.get('http://ifconfig.me').text
 KAFKA_SRC_TOPIC = "iot"
 KAFKA_SNK_TOPIC = "iot_enrich"
 
-def model_lookup(data):
+@udf(result_type=DataTypes.INT())
+def model_lookup(sensor_1, sensor_0, sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11):
     global ACCESS_KEY
-    p = json.loads(data)
-    feature = "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (p['sensor_1'], p['sensor_0'], p['sensor_2'],
-                                                                  p['sensor_3'], p['sensor_4'], p['sensor_5'],
-                                                                  p['sensor_6'], p['sensor_7'], p['sensor_8'],
-                                                                  p['sensor_9'], p['sensor_10'], p['sensor_11'])
+    feature = "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (sensor_1, sensor_0, sensor_2,
+                                                                  sensor_3, sensor_4, sensor_5,
+                                                                  sensor_6, sensor_7, sensor_8,
+                                                                  sensor_9, sensor_10, sensor_11)
 
     url = 'http://cdsw.' + PUBLIC_IP + '.nip.io/api/altus-ds-1/models/call-model'
     data = '{"accessKey":"' + ACCESS_KEY + '", "request":{"feature":"' + feature + '"}}'
@@ -42,15 +42,22 @@ def model_lookup(data):
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/json'})
         j = resp.json()
         if 'response' in j and 'result' in j['response']:
-            return resp.json()['response']['result']
+            result =  resp.json()['response']['result']
+            return result
         print(">>>>>>>>>>>>>>>>>>>>>" + resp.text)
         time.sleep(.1)
 
+@udf(result_type=DataTypes.STRING())
+def model_lookup_1(sensor_1, sensor_0, sensor_2, sensor_3, sensor_4, sensor_5, sensor_6, sensor_7, sensor_8, sensor_9, sensor_10, sensor_11):
+    global ACCESS_KEY
+    feature = "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (sensor_1, sensor_0, sensor_2,
+                                                                  sensor_3, sensor_4, sensor_5,
+                                                                  sensor_6, sensor_7, sensor_8,
+                                                                  sensor_9, sensor_10, sensor_11)
 
-@udf(result_type=DataTypes.INT(), func_type="pandas")
-def add(i, j):
-    return i + j
-
+    url = 'http://cdsw.' + PUBLIC_IP + '.nip.io/api/altus-ds-1/models/call-model'
+    data = '{"accessKey":"' + ACCESS_KEY + '", "request":{"feature":"' + feature + '"}}'
+    return data
 
 def read_from_kafka(env):
 
@@ -67,7 +74,7 @@ def read_from_kafka(env):
         deserialization_schema=deserialization_schema,
         properties={
             "bootstrap.servers": KAFKA_BROKERS,
-            "group.id": "test_group_1",
+            "group.id": "test_group_100",
         },
     )
     kafka_consumer.set_start_from_earliest()
@@ -75,18 +82,20 @@ def read_from_kafka(env):
     ds = env.add_source(kafka_consumer)
 
     t_env = StreamTableEnvironment.create(env)
-    t_env.create_temporary_function("add", add)
+    t_env.create_temporary_function("model_lookup", model_lookup)
 
     t = t_env.from_data_stream(ds)
-
     t_env.create_temporary_view("InputTable", t)
 
-    res_table = t_env.sql_query("SELECT * FROM InputTable")
+
+    #res_table = t_env.sql_query("SELECT sensor_0,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11, cast(model_lookup(sensor_0,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11) as INT) FROM InputTable")
+
+    res_table = t_env.sql_query("SELECT *, model_lookup(sensor_0,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11) FROM InputTable")
 
     res_ds = t_env.to_data_stream(res_table)
 
-    sink_type_info =  Types.ROW_NAMED(field_names = ["sensor_id", "sensor_ts","sensor_0","sensor_1","sensor_2","sensor_3","sensor_4","sensor_5","sensor_6","sensor_7","sensor_8","sensor_9","sensor_10","sensor_11"],
-                                     field_types=[Types.INT(), Types.LONG(), Types.DOUBLE(),Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE()])
+    sink_type_info =  Types.ROW_NAMED(field_names = ["sensor_id", "sensor_ts","sensor_0","sensor_1","sensor_2","sensor_3","sensor_4","sensor_5","sensor_6","sensor_7","sensor_8","sensor_9","sensor_10","sensor_11","is_healthy"],
+                                      field_types=[Types.INT(), Types.LONG(), Types.DOUBLE(),Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.INT()])
 
 
     serialization_schema = (
@@ -114,11 +123,11 @@ if __name__ == "__main__":
     env = StreamExecutionEnvironment.get_execution_environment()
     table_env = StreamTableEnvironment.create(env)
 
-    #ACCESS_KEY = sys.argv[1]
+    ACCESS_KEY = sys.argv[1]
     env.add_jars("file:///tmp/flink-sql-connector-kafka-1.16.1.jar")
 
     #    print("start writing data to kafka")
     #    write_to_kafka(env)
 
-    print("start reading data from kafka")
+    print("start reading data from kafka ML ")
     read_from_kafka(env)
