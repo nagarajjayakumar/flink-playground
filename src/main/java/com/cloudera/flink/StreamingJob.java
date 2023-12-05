@@ -52,8 +52,8 @@ import java.util.concurrent.TimeUnit;
 
 public class StreamingJob {
 
-	public static final String IPDR_INPUT_TOPIC = "ipdr.input.topic";
-	public static final String IPDR_OUTPUT_TOPIC = "ipdr.output.topic";
+	public static final String CLDR_INPUT_TOPIC = "cloudera.input.topic";
+	public static final String CLDR_OUTPUT_TOPIC = "cloudera.output.topic";
 	public static final String KAFKA_BOOTSTRAP_SERVERS = "kafka.bootstrap.servers";
 	public static final String TUMBLING_WINDOW_SIZE = "window.size.min";
 	public static final String FS_OUTPUT = "fsysOutput";
@@ -78,7 +78,7 @@ public class StreamingJob {
 			checkpointConf.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
 			checkpointConf.setCheckpointTimeout(TimeUnit.HOURS.toMillis(1));
 			checkpointConf.setExternalizedCheckpointCleanup(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
-			//checkpointConf.setCheckpointStorage("hdfs:///user/flink/ipdr_usage/checkpoints");
+			//checkpointConf.setCheckpointStorage("hdfs:///user/flink/CLDR_usage/checkpoints");
 			env.getConfig().setUseSnapshotCompression(true);
 		}
 
@@ -210,7 +210,7 @@ public class StreamingJob {
 	public static DataStream<IPDRMessages> readIPDRStream(ParameterTool params, StreamExecutionEnvironment env) {
 
 	// We read the IPDR Stream objects directly from the Kafka source using the schema
-		  String topic = params.getRequired(IPDR_INPUT_TOPIC);
+		  String topic = params.getRequired(CLDR_INPUT_TOPIC);
 		  System.out.println("Input topic is: "+topic);
 
 		  KafkaSource<IPDRMessages> IPDRSource = KafkaSource.<IPDRMessages>builder()
@@ -234,7 +234,7 @@ public class StreamingJob {
 	  public static void writeIPDRStreamKafka(ParameterTool params, DataStream<OutputUsageMessages> IPDRResultStream) {
 
 // IPDR stream output is written back to kafka in a tab delimited format for readability
-		String topic = params.getRequired(IPDR_OUTPUT_TOPIC);
+		String topic = params.getRequired(CLDR_OUTPUT_TOPIC);
 		KafkaSink<OutputUsageMessages> IPDROutputSink = KafkaSink.<OutputUsageMessages>builder()
 				.setBootstrapServers(params.get(KAFKA_BOOTSTRAP_SERVERS))
 				.setRecordSerializer(KafkaRecordSerializationSchema.builder()
