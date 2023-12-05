@@ -47,17 +47,6 @@ def model_lookup(sensor_1, sensor_0, sensor_2,sensor_3,sensor_4,sensor_5,sensor_
         print(">>>>>>>>>>>>>>>>>>>>>" + resp.text)
         time.sleep(.1)
 
-@udf(result_type=DataTypes.STRING())
-def model_lookup_1(sensor_1, sensor_0, sensor_2, sensor_3, sensor_4, sensor_5, sensor_6, sensor_7, sensor_8, sensor_9, sensor_10, sensor_11):
-    global ACCESS_KEY
-    feature = "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (sensor_1, sensor_0, sensor_2,
-                                                                  sensor_3, sensor_4, sensor_5,
-                                                                  sensor_6, sensor_7, sensor_8,
-                                                                  sensor_9, sensor_10, sensor_11)
-
-    url = 'http://cdsw.' + PUBLIC_IP + '.nip.io/api/altus-ds-1/models/call-model'
-    data = '{"accessKey":"' + ACCESS_KEY + '", "request":{"feature":"' + feature + '"}}'
-    return data
 
 def read_from_kafka(env):
 
@@ -77,7 +66,7 @@ def read_from_kafka(env):
             "group.id": "test_group_100",
         },
     )
-    kafka_consumer.set_start_from_earliest()
+    kafka_consumer.set_start_from_latest()
 
     ds = env.add_source(kafka_consumer)
 
@@ -86,9 +75,6 @@ def read_from_kafka(env):
 
     t = t_env.from_data_stream(ds)
     t_env.create_temporary_view("InputTable", t)
-
-
-    #res_table = t_env.sql_query("SELECT sensor_0,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11, cast(model_lookup(sensor_0,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11) as INT) FROM InputTable")
 
     res_table = t_env.sql_query("SELECT *, model_lookup(sensor_0,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,sensor_6,sensor_7,sensor_8,sensor_9,sensor_10,sensor_11) FROM InputTable")
 
@@ -103,7 +89,7 @@ def read_from_kafka(env):
     )
 
     kafka_producer = FlinkKafkaProducer(
-        topic="test_json_topic_sink",
+        topic=KAFKA_SNK_TOPIC,
         serialization_schema=serialization_schema,
         producer_config={
             "bootstrap.servers": "cdp.52.20.13.127.nip.io:9092",
