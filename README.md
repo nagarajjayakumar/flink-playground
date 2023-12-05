@@ -36,3 +36,10 @@ Once the Flink job restarted, it was observed in Flink UI that 20 messages have 
 flink run   -d   -t yarn-per-job  -ynm StreamingKafkaJob  -pyarch venv.zip   -pyclientexec venv.zip/venv/bin/python3.8 -pyexec venv.zip/venv/bin/python3.8  -py /tmp/nag_kafka.py
 
 ```
+
+## Usage of Pyflink Job submission with ML integration 
+
+```
+ACCESS_KEY=<put here your cdsw/CML model access key>
+flink run   -d   -t yarn-per-job  -ynm StreamingKafkaJobML  -pyarch venv.zip   -pyclientexec venv.zip/venv/bin/python3.8 -pyexec venv.zip/venv/bin/python3.8  -py /tmp/nag_kafka.py  $ACCESS_KEY
+```
