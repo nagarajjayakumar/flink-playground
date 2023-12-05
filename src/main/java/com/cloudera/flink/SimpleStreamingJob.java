@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 
-package cloudera.flink;
+package com.cloudera.flink;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ConfigurationUtils;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -32,14 +31,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-public class StreamingJob {
+public class SimpleStreamingJob {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StreamingJob.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleStreamingJob.class);
 
     private SourceFunction<Long> source;
     private SinkFunction<Long> sink;
 
-    public StreamingJob(SourceFunction<Long> source, SinkFunction<Long> sink) {
+    public SimpleStreamingJob(SourceFunction<Long> source, SinkFunction<Long> sink) {
         this.source = source;
         this.sink = sink;
     }
@@ -71,7 +70,7 @@ public class StreamingJob {
     }
 
     public static void main(String[] args) throws Exception {
-        StreamingJob job = new StreamingJob(new RandomLongSource(), new PrintSinkFunction<>());
+        SimpleStreamingJob job = new SimpleStreamingJob(new RandomLongSource(), new PrintSinkFunction<>());
         job.execute();
     }
 

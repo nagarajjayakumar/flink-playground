@@ -1,5 +1,6 @@
 package cloudera.flink;
 
+import com.cloudera.flink.IncrementMapFunction;
 import org.junit.Assert;
 import org.junit.Test;
 

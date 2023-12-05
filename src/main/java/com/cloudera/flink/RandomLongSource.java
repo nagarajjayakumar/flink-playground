@@ -1,4 +1,4 @@
-package cloudera.flink;
+package com.cloudera.flink;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;

@@ -1,4 +1,4 @@
-package cloudera.flink;
+package com.cloudera.flink;
 
 import org.apache.flink.api.common.functions.MapFunction;
 
