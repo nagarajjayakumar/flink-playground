@@ -53,13 +53,17 @@ def add(i, j):
 
 
 def read_from_kafka(env):
+
+    src_type_info =  Types.ROW_NAMED(field_names = ["sensor_id", "sensor_ts","sensor_0","sensor_1","sensor_2","sensor_3","sensor_4","sensor_5","sensor_6","sensor_7","sensor_8","sensor_9","sensor_10","sensor_11"],
+                                     field_types=[Types.INT(), Types.LONG(), Types.DOUBLE(),Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE()])
+
     deserialization_schema = (
         JsonRowDeserializationSchema.Builder()
-            .type_info(Types.ROW([Types.INT(), Types.STRING()]))
+            .type_info(src_type_info)
             .build()
     )
     kafka_consumer = FlinkKafkaConsumer(
-        topics='test_json_topic',
+        topics=KAFKA_SRC_TOPIC,
         deserialization_schema=deserialization_schema,
         properties={
             "bootstrap.servers": KAFKA_BROKERS,
@@ -73,18 +77,20 @@ def read_from_kafka(env):
     t_env = StreamTableEnvironment.create(env)
     t_env.create_temporary_function("add", add)
 
-    t = t_env.from_data_stream(ds).alias("id", "desc")
+    t = t_env.from_data_stream(ds)
 
     t_env.create_temporary_view("InputTable", t)
 
-    res_table = t_env.sql_query("SELECT add(id, id) as ids, desc as description FROM InputTable")
+    res_table = t_env.sql_query("SELECT * FROM InputTable")
 
     res_ds = t_env.to_data_stream(res_table)
 
-    type_info =  Types.ROW_NAMED(field_names = ["ids", "description"],field_types=[Types.INT(), Types.STRING()])
+    sink_type_info =  Types.ROW_NAMED(field_names = ["sensor_id", "sensor_ts","sensor_0","sensor_1","sensor_2","sensor_3","sensor_4","sensor_5","sensor_6","sensor_7","sensor_8","sensor_9","sensor_10","sensor_11"],
+                                     field_types=[Types.INT(), Types.LONG(), Types.DOUBLE(),Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE(), Types.DOUBLE()])
+
 
     serialization_schema = (
-        JsonRowSerializationSchema.Builder().with_type_info(type_info).build()
+        JsonRowSerializationSchema.Builder().with_type_info(sink_type_info).build()
     )
 
     kafka_producer = FlinkKafkaProducer(
@@ -108,7 +114,7 @@ if __name__ == "__main__":
     env = StreamExecutionEnvironment.get_execution_environment()
     table_env = StreamTableEnvironment.create(env)
 
-    ACCESS_KEY = sys.argv[1]
+    #ACCESS_KEY = sys.argv[1]
     env.add_jars("file:///tmp/flink-sql-connector-kafka-1.16.1.jar")
 
     #    print("start writing data to kafka")
